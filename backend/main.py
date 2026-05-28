@@ -1,17 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from database import engine, Base
 import models
 from auth import router as auth_router
 from tasks import router as tasks_router
 from reports import router as reports_router
+import os
 
 app = FastAPI()
 
-# Database tables banana
 Base.metadata.create_all(bind=engine)
 
-# CORS settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,7 +20,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 app.include_router(auth_router)
 app.include_router(tasks_router)
 app.include_router(reports_router)

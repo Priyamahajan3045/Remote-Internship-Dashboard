@@ -4,18 +4,44 @@ import API from '../services/api';
 function Kanban() {
   const [tasks, setTasks] = useState({ Todo: [], 'In Progress': [], Done: [] });
   const [showForm, setShowForm] = useState(false);
-  const [newTask, setNewTask] = useState({ title: '', description: '', deadline: '', priority: 'Low', intern_id: 1 });
+  const [interns, setInterns] = useState([]);
+  const [selectedIntern, setSelectedIntern] = useState('all');
+  const [newTask, setNewTask] = useState({ title: '', description: '', deadline: '', priority: 'Low', intern_id: '' });
   const role = localStorage.getItem('role');
+  const user_id = parseInt(localStorage.getItem('user_id'));
 
   useEffect(() => {
     fetchTasks();
+    if (role === 'mentor') fetchInterns();
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [selectedIntern]);
+
+  const fetchInterns = async () => {
+    try {
+      const res = await API.get('/interns/');
+      setInterns(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
       const res = await API.get('/tasks/');
+      const allTasks = res.data;
+      let filtered;
+      if (role === 'intern') {
+        filtered = allTasks.filter(t => t.intern_id === user_id);
+      } else if (selectedIntern === 'all') {
+        filtered = allTasks;
+      } else {
+        filtered = allTasks.filter(t => t.intern_id === parseInt(selectedIntern));
+      }
       const grouped = { Todo: [], 'In Progress': [], Done: [] };
-      res.data.forEach(task => {
+      filtered.forEach(task => {
         if (grouped[task.status]) grouped[task.status].push(task);
       });
       setTasks(grouped);
@@ -35,9 +61,9 @@ function Kanban() {
 
   const createTask = async () => {
     try {
-      await API.post('/tasks/', { ...newTask, status: 'Todo', created_by: 1 });
+      await API.post('/tasks/', { ...newTask, status: 'Todo', created_by: user_id });
       setShowForm(false);
-      setNewTask({ title: '', description: '', deadline: '', priority: 'Low', intern_id: 1 });
+      setNewTask({ title: '', description: '', deadline: '', priority: 'Low', intern_id: '' });
       fetchTasks();
     } catch (err) {
       console.log(err);
@@ -63,8 +89,20 @@ function Kanban() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h2 style={{ margin: 0, color: '#2E5FA3' }}>📋 Kanban Board</h2>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <a href="/dashboard" style={{ marginRight: '15px', color: '#2E5FA3', textDecoration: 'none' }}>← Dashboard</a>
+
+          {/* Mentor ke liye Intern Filter Dropdown */}
+          {role === 'mentor' && (
+            <select value={selectedIntern} onChange={e => setSelectedIntern(e.target.value)}
+              style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '14px' }}>
+              <option value="all">👥 Saare Interns</option>
+              {interns.map(intern => (
+                <option key={intern.id} value={intern.id}>👤 {intern.name}</option>
+              ))}
+            </select>
+          )}
+
           {role === 'mentor' && (
             <button onClick={() => setShowForm(true)} style={{ background: '#2E5FA3', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>
               + New Task
@@ -74,7 +112,7 @@ function Kanban() {
       </div>
 
       {/* New Task Form */}
-      {showForm && (
+      {showForm && role === 'mentor' && (
         <div style={{ background: 'white', padding: '25px', borderRadius: '12px', marginBottom: '25px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <h3 style={{ margin: '0 0 15px', color: '#2E5FA3' }}>Create New Task</h3>
           <input placeholder="Task Title" value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })}
@@ -84,13 +122,18 @@ function Kanban() {
           <input type="date" value={newTask.deadline} onChange={e => setNewTask({ ...newTask, deadline: e.target.value })}
             style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
           <select value={newTask.priority} onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
-            style={{ width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+            style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
             <option value="Low">Low Priority</option>
             <option value="Medium">Medium Priority</option>
             <option value="High">High Priority</option>
           </select>
-          <input type="number" placeholder="Intern ID" value={newTask.intern_id} onChange={e => setNewTask({ ...newTask, intern_id: parseInt(e.target.value) })}
-            style={{ width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ddd', boxSizing: 'border-box' }} />
+          <select value={newTask.intern_id} onChange={e => setNewTask({ ...newTask, intern_id: parseInt(e.target.value) })}
+            style={{ width: '100%', padding: '10px', marginBottom: '15px', borderRadius: '6px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+            <option value="">-- Intern Select Karo --</option>
+            {interns.map(intern => (
+              <option key={intern.id} value={intern.id}>{intern.name} ({intern.email})</option>
+            ))}
+          </select>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button onClick={createTask} style={{ background: '#2E5FA3', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '6px', cursor: 'pointer' }}>Create</button>
             <button onClick={() => setShowForm(false)} style={{ background: '#eee', color: '#333', border: 'none', padding: '10px 25px', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
@@ -117,10 +160,24 @@ function Kanban() {
                     </span>
                     <span style={{ fontSize: '12px', color: '#999' }}>📅 {task.deadline}</span>
                   </div>
+                  {role === 'mentor' && (
+                    <p style={{ fontSize: '12px', color: '#2E5FA3', margin: '0 0 8px', fontWeight: 'bold' }}>
+                      👤 {interns.find(i => i.id === task.intern_id)?.name || 'Unknown'}
+                    </p>
+                  )}
                   <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                    {col !== 'Todo' && <button onClick={() => moveTask(task, col === 'In Progress' ? 'Todo' : 'In Progress')} style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ddd', cursor: 'pointer', background: 'white' }}>← Back</button>}
-                    {col !== 'Done' && <button onClick={() => moveTask(task, col === 'Todo' ? 'In Progress' : 'Done')} style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', background: '#2E5FA3', color: 'white' }}>Move →</button>}
-                    {role === 'mentor' && <button onClick={() => deleteTask(task.id)} style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', background: '#ffebee', color: 'red' }}>🗑</button>}
+                    {role === 'intern' && col !== 'Done' && (
+                      <button onClick={() => moveTask(task, col === 'Todo' ? 'In Progress' : 'Done')}
+                        style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', background: '#2E5FA3', color: 'white' }}>
+                        Move →
+                      </button>
+                    )}
+                    {role === 'mentor' && (
+                      <button onClick={() => deleteTask(task.id)}
+                        style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', background: '#ffebee', color: 'red' }}>
+                        🗑 Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

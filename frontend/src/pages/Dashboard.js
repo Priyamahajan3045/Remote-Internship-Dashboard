@@ -13,8 +13,11 @@ function Dashboard() {
 
   const fetchTasks = async () => {
     try {
-      const res = await API.get('/tasks/');
-      setTasks(res.data);
+     const res = await API.get('/tasks/');
+const user_id = parseInt(localStorage.getItem('user_id'));
+const role = localStorage.getItem('role');
+const filtered = role === 'intern' ? res.data.filter(t => t.intern_id === user_id) : res.data;
+setTasks(filtered);
     } catch (err) {
       console.log(err);
     }
@@ -44,7 +47,8 @@ function Dashboard() {
       <div style={{ background: '#2E5FA3', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ color: 'white', margin: 0 }}>🎓 InternTrack</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Role: {role}</span>
+         <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Welcome, {localStorage.getItem('name')}! ({role})</span>
+          <a href="/profile" style={{ color: 'white', textDecoration: 'none', fontSize: '14px', background: 'rgba(255,255,255,0.2)', padding: '6px 14px', borderRadius: '20px' }}>👤 Profile</a>
           <button onClick={handleLogout} style={{ padding: '8px 16px', background: 'white', color: '#2E5FA3', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Logout</button>
         </div>
       </div>
@@ -98,6 +102,15 @@ function Dashboard() {
               <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: '14px' }}>Track your progress</p>
             </div>
           </a>
+          {role === 'mentor' && (
+  <a href="/manage-users" style={{ textDecoration: 'none', flex: 1 }}>
+    <div style={{ background: 'linear-gradient(135deg, #9c27b0, #ce93d8)', padding: '25px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+      <div style={{ fontSize: '40px', marginBottom: '10px' }}>👥</div>
+      <h3 style={{ color: 'white', margin: '0 0 5px' }}>Manage Users</h3>
+      <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: '14px' }}>Delete & reset passwords</p>
+    </div>
+  </a>
+)}
         </div>
 
         {/* Recent Tasks */}

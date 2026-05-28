@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Kanban from './pages/Kanban';
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
+import ManageUsers from './pages/ManageUsers';
+import Profile from './pages/Profile';
 
 function App() {
   const token = localStorage.getItem('token');
@@ -21,6 +23,8 @@ function App() {
         <Route path="/kanban" element={token ? <Kanban /> : <Navigate to="/login" />} />
         <Route path="/reports" element={token ? <Reports /> : <Navigate to="/login" />} />
         <Route path="/analytics" element={token ? <Analytics /> : <Navigate to="/login" />} />
+        <Route path="/manage-users" element={token ? <ManageUsers /> : <Navigate to="/login" />} />
+        <Route path="/profile" element={token ? <Profile /> : <Navigate to="/login" />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

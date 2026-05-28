@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
-from sqlalchemy.orm import relationship
 from database import Base
 import datetime
 
@@ -27,13 +26,15 @@ class WeeklyReport(Base):
     id = Column(Integer, primary_key=True, index=True)
     week_number = Column(Integer)
     content = Column(Text)
+    status = Column(String(20), default="Pending")
     submitted_at = Column(DateTime, default=datetime.datetime.utcnow)
     intern_id = Column(Integer, ForeignKey("users.id"))
-
+    document_path = Column(String(500), nullable=True)
 class Feedback(Base):
     __tablename__ = "feedback"
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text)
+    document_path = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     report_id = Column(Integer, ForeignKey("weekly_reports.id"))
     mentor_id = Column(Integer, ForeignKey("users.id"))

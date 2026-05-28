@@ -68,3 +68,8 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.delete(task)
     db.commit()
     return {"message": "Task deleted"}
+@router.get("/interns/")
+def get_interns(db: Session = Depends(get_db)):
+    from models import User
+    interns = db.query(User).filter(User.role == "intern").all()
+    return [{"id": u.id, "name": u.name, "email": u.email} for u in interns]

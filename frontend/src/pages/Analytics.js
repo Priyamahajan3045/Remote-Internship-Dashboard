@@ -5,6 +5,8 @@ import API from '../services/api';
 function Analytics() {
   const [tasks, setTasks] = useState([]);
   const [reports, setReports] = useState([]);
+  const role = localStorage.getItem('role');
+  const user_id = parseInt(localStorage.getItem('user_id'));
 
   useEffect(() => {
     fetchData();
@@ -14,8 +16,12 @@ function Analytics() {
     try {
       const taskRes = await API.get('/tasks/');
       const reportRes = await API.get('/reports/');
-      setTasks(taskRes.data);
-      setReports(reportRes.data);
+      const allTasks = taskRes.data;
+      const allReports = reportRes.data;
+      const filteredTasks = role === 'intern' ? allTasks.filter(t => t.intern_id === user_id) : allTasks;
+      const filteredReports = role === 'intern' ? allReports.filter(r => r.intern_id === user_id) : allReports;
+      setTasks(filteredTasks);
+      setReports(filteredReports);
     } catch (err) {
       console.log(err);
     }
@@ -33,11 +39,6 @@ function Analytics() {
     { name: 'High', tasks: tasks.filter(t => t.priority === 'High').length },
   ];
 
-  const reportData = reports.map(r => ({
-    name: `Week ${r.week_number}`,
-    reports: 1
-  }));
-
   const COLORS = ['#2E5FA3', '#f57c00', '#388e3c'];
   const completionRate = tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Done').length / tasks.length) * 100) : 0;
 
@@ -46,7 +47,7 @@ function Analytics() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h2 style={{ margin: 0, color: '#2E5FA3' }}>📊 Analytics</h2>
+        <h2 style={{ margin: 0, color: '#2E5FA3' }}>📊 Analytics {role === 'intern' ? '— My Progress' : '— All Interns'}</h2>
         <a href="/dashboard" style={{ color: '#2E5FA3', textDecoration: 'none' }}>← Dashboard</a>
       </div>
 
@@ -65,7 +66,7 @@ function Analytics() {
           <p style={{ fontSize: '42px', fontWeight: 'bold', margin: 0, color: '#333' }}>{completionRate}%</p>
         </div>
         <div style={{ background: 'white', padding: '20px', borderRadius: '12px', flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', textAlign: 'center', borderTop: '4px solid #9c27b0' }}>
-          <h3 style={{ color: '#9c27b0', margin: '0 0 10px' }}>Reports Submitted</h3>
+          <h3 style={{ color: '#9c27b0', margin: '0 0 10px' }}>Reports</h3>
           <p style={{ fontSize: '42px', fontWeight: 'bold', margin: 0, color: '#333' }}>{reports.length}</p>
         </div>
       </div>
@@ -73,7 +74,7 @@ function Analytics() {
       {/* Charts */}
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
 
-        {/* Bar Chart - Priority */}
+        {/* Bar Chart */}
         <div style={{ background: 'white', padding: '25px', borderRadius: '12px', flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: '300px' }}>
           <h3 style={{ color: '#2E5FA3', margin: '0 0 20px' }}>Tasks by Priority</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -88,7 +89,7 @@ function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart - Status */}
+        {/* Pie Chart */}
         <div style={{ background: 'white', padding: '25px', borderRadius: '12px', flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: '300px' }}>
           <h3 style={{ color: '#2E5FA3', margin: '0 0 20px' }}>Task Status</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -103,7 +104,7 @@ function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bars */}
         <div style={{ background: 'white', padding: '25px', borderRadius: '12px', flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', minWidth: '300px' }}>
           <h3 style={{ color: '#2E5FA3', margin: '0 0 20px' }}>Overall Progress</h3>
           <div style={{ marginBottom: '20px' }}>
@@ -115,7 +116,7 @@ function Analytics() {
               <div style={{ background: 'linear-gradient(90deg, #2E5FA3, #4a90d9)', height: '12px', borderRadius: '10px', width: `${completionRate}%`, transition: 'width 1s ease' }} />
             </div>
           </div>
-          <div style={{ marginBottom: '20px' }}>
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ color: '#666' }}>Reports Submitted</span>
               <span style={{ color: '#388e3c', fontWeight: 'bold' }}>{reports.length} / 5 weeks</span>
